@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+
+  <title>#(id)</title>
+</head>
+
+<body>
+    <ul>
+        #for(user in users):
+            <li>
+                <div>
+                    #(user.id)
+                </div>
+                <div>
+                    #(user.name)
+                </div>
+                <div>
+                    #(user.email)
+                </div>
+                <div>
+                    #(user.password)
+                </div>
+            </li>
+        #endfor
+    </ul>
+  <h1>#(name)</h1>
+  <h2>#(email)</h2>
+  <h3>#(password)</h3>
+</body>
+</html>
