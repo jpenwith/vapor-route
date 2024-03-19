@@ -36,23 +36,6 @@ func routes(_ app: Application) throws {
 
         return user
     }
-
-//    app.handle(UpdateUserRoute()) { input, vaporRequest in
-//        let fetchedUser = User(
-//            id: input.userID,
-//            name: "John",
-//            email: "john@example.com",
-//            password: "hunter2"
-//        )
-//        
-//        var updatedUser = fetchedUser
-//
-//        updatedUser.name = input.user.name ?? updatedUser.name
-//        updatedUser.email = input.user.email ?? updatedUser.email
-//        updatedUser.password = input.user.password ?? updatedUser.password
-//        
-//        return updatedUser
-//    }
 }
 
 struct User: Vapor.Content {
@@ -112,18 +95,22 @@ actor UserAPI {
 struct IndexUsersRoute: Route  {
     let path = "users"
 
-    typealias Output = [User]
+    
 }
 
-extension IndexUsersRoute: ViewResponseRoute {
-    var templateName: String { "users/index.leaf" }
+extension IndexUsersRoute {
+    struct Response: RouteViewResponse {
+        typealias Output = [User]
 
-    struct ViewContext: Encodable {
-        let users: Output
-    }
-
-    func createViewContext(_ output: [User]) -> ViewContext? {
-        .init(users: output)
+        var templateName: String { "users/index.leaf" }
+        
+        struct ViewContext: Encodable {
+            let users: [User]
+        }
+        
+        func createViewContext(_ output: [User]) -> ViewContext? {
+            .init(users: output)
+        }
     }
 }
 
@@ -131,143 +118,147 @@ extension IndexUsersRoute: ViewResponseRoute {
 struct CreateUserRoute: Route  {
     let method: HTTPMethod = .POST
     let path = "users"
-
-    struct Input {
-        let userName: String
-        let userEmail: String
-        let userPassword: String
+    
+    struct Request: RouteHTTPRequest {
+        struct Input {
+            let userName: String
+            let userEmail: String
+            let userPassword: String
+        }
+        
+        struct Content: Decodable {
+            let name: String
+            let email: String
+            let password: String
+        }
+        
+        func decodeToInput(_ parameters: Parameters, query: EmptyQuery, content: Content) async throws -> Input {
+            .init(
+                userName: content.name,
+                userEmail: content.email,
+                userPassword: content.password
+            )
+        }
     }
+    
+    struct Response: RouteViewResponse {
+        typealias Output = User
 
-    typealias Output = User
+        var templateName: String { "users/read.leaf" }
+
+        struct ViewContext: Encodable {
+            let user: User
+        }
+
+        func createViewContext(_ output: User) -> ViewContext? {
+            .init(user: output)
+        }
+    }
 }
 
-extension CreateUserRoute: HTTPRoute {
-    struct Content: Decodable {
-        let name: String
-        let email: String
-        let password: String
-    }
-
-    func decodeToInput(_ parameters: Parameters, query: EmptyQuery, content: Content) async throws -> Input {
-        .init(
-            userName: content.name,
-            userEmail: content.email,
-            userPassword: content.password
-        )
-    }
-}
-
-extension CreateUserRoute: ViewResponseRoute {
-    var templateName: String { "users/read.leaf" }
-
-    struct ViewContext: Encodable {
-        let user: Output
-    }
-
-    func createViewContext(_ output: User) -> ViewContext? {
-        .init(user: output)
-    }
-}
 
 
 struct ReadUserRoute: Route  {
     let path = "users/:userID"
 
-    struct Input {
-        let userID: UUID
-    }
+    struct Request: RouteHTTPRequest {
+        struct Input {
+            let userID: UUID
+        }
 
-    typealias Output = User
+        func decodeToInput(_ parameters: Parameters, query: EmptyQuery, content: EmptyContent) async throws -> Input {
+            .init(userID: try parameters.require("userID"))
+        }
+    }
+    
+    struct Response: RouteViewResponse {
+        typealias Output = User
+
+        var templateName: String { "users/read.leaf" }
+
+        struct ViewContext: Encodable {
+            let user: User
+        }
+
+        func createViewContext(_ output: User) -> ViewContext? {
+            .init(user: output)
+        }
+    }
 }
 
-extension ReadUserRoute: HTTPRoute {
-    func decodeToInput(_ parameters: Parameters, query: EmptyQuery, content: EmptyContent) async throws -> Input {
-        .init(userID: try parameters.require("userID"))
-    }
-}
-
-extension ReadUserRoute: ViewResponseRoute {
-    var templateName: String { "users/read.leaf" }
-
-    struct ViewContext: Encodable {
-        let user: Output
-    }
-
-    func createViewContext(_ output: User) -> ViewContext? {
-        .init(user: output)
-    }
-}
 
 
 struct UpdateUserRoute: Route  {
     let method: HTTPMethod = .PATCH
     let path = "users/:userID"
 
-    struct Input {
-        let userID: UUID
-        let userName: String
-        let userEmail: String
-        let userPassword: String
+    struct Request: RouteHTTPRequest {
+        struct Input {
+            let userID: UUID
+            let userName: String
+            let userEmail: String
+            let userPassword: String
+        }
+        
+        struct Content: Decodable {
+            let name: String
+            let email: String
+            let password: String
+        }
+
+        func decodeToInput(_ parameters: Parameters, query: EmptyQuery, content: Content) async throws -> Input {
+            .init(
+                userID: try parameters.require("userID"),
+                userName: content.name,
+                userEmail: content.email,
+                userPassword: content.password
+            )
+        }
     }
 
-    typealias Output = User
+    struct Response: RouteViewResponse {
+        typealias Output = User
+        
+        var templateName: String { "users/read.leaf" }
+
+        struct ViewContext: Encodable {
+            let user: User
+        }
+
+        func createViewContext(_ output: User) -> ViewContext? {
+            .init(user: output)
+        }
+    }
 }
 
-extension UpdateUserRoute: HTTPRoute {
-    struct Content: Decodable {
-        let name: String
-        let email: String
-        let password: String
-    }
-
-    func decodeToInput(_ parameters: Parameters, query: EmptyQuery, content: Content) async throws -> Input {
-        .init(
-            userID: try parameters.require("userID"),
-            userName: content.name,
-            userEmail: content.email,
-            userPassword: content.password
-        )
-    }
-}
-
-extension UpdateUserRoute: ViewResponseRoute {
-    var templateName: String { "users/read.leaf" }
-
-    struct ViewContext: Encodable {
-        let user: Output
-    }
-
-    func createViewContext(_ output: User) -> ViewContext? {
-        .init(user: output)
-    }
-}
 
 
 struct DeleteUserRoute: Route  {
     let method: HTTPMethod = .DELETE
     let path = "users/:userID"
 
-    struct Input {
-        let userID: UUID
+    struct Request: RouteHTTPRequest {
+        struct Input {
+            let userID: UUID
+        }
+        
+        func decodeToInput(_ parameters: Parameters, query: EmptyQuery, content: EmptyContent) async throws -> Input {
+            .init(userID: try parameters.require("userID"))
+        }
+
     }
 
-    typealias Output = User
-}
+    struct Response: RouteViewResponse {
+        typealias Output = User
+        
+        var templateName: String { "users/read.leaf" }
 
-extension DeleteUserRoute: HTTPRoute {
-    func decodeToInput(_ parameters: Parameters, query: EmptyQuery, content: EmptyContent) async throws -> Input {
-        .init(userID: try parameters.require("userID"))
-    }
-}
+        struct ViewContext: Encodable {
+            let user: Output
+        }
 
-extension DeleteUserRoute: ViewResponseRoute {
-    var templateName: String { "users/read.leaf" }
-
-    struct ViewContext: Encodable {
-        let user: Output
-    }
-
-    func createViewContext(_ output: User) -> ViewContext? {
-        .init(user: output)
+        func createViewContext(_ output: User) -> ViewContext? {
+            .init(user: output)
+        }
     }
 }

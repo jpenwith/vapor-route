@@ -1,5 +1,5 @@
 //
-//  ViewResponseRoute
+//  RouteViewResponse
 //
 //
 //  Created by me on 17/03/2024.
@@ -10,9 +10,9 @@ import Vapor
 
 
 /*
- A ViewResponseRoute renders a Vapor.View from a template and supplies a Context if needed
+ A RouteViewResponse renders a Vapor.View from a template and supplies a Context if needed
  */
-protocol ViewResponseRoute: Route {
+protocol RouteViewResponse: RouteResponse {
     associatedtype ViewContext: Encodable = Output
 
     var templateName: String { get }
@@ -20,21 +20,21 @@ protocol ViewResponseRoute: Route {
 }
 
 //Default to no context
-extension ViewResponseRoute  {
+extension RouteViewResponse  {
     func createViewContext(_ output: Output) -> ViewContext? {
         nil
     }
 }
 
 //Or define Context as Route.Output to just provide that
-extension ViewResponseRoute where ViewContext == Output  {
+extension RouteViewResponse where ViewContext == Output  {
     func createViewContext(_ output: Output) -> ViewContext? {
         output
     }
 }
 
-extension ViewResponseRoute {
-    func renderViewWithOutput(_ output: Output, vaporRequest: Request) async throws -> Vapor.View {
+extension RouteViewResponse {
+    func renderViewWithOutput(_ output: Output, vaporRequest: Vapor.Request) async throws -> Vapor.View {
         try await vaporRequest.view.render(
             templateName,
             createViewContext(output)
@@ -42,8 +42,8 @@ extension ViewResponseRoute {
     }
 }
 
-extension ViewResponseRoute {
-    func encodeOutputToVaporResponse(_ output: Output, with vaporRequest: Request) async throws -> Vapor.Response {
+extension RouteViewResponse {
+    func encodeOutputToVaporResponse(_ output: Output, with vaporRequest: Vapor.Request) async throws -> Vapor.Response {
         try await renderViewWithOutput(
             output,
             vaporRequest: vaporRequest

@@ -9,7 +9,7 @@ import Foundation
 import Vapor
 
 
-protocol HTTPRoute: Route {
+protocol RouteHTTPRequest: RouteRequest {
     typealias Parameters = Vapor.Parameters
     associatedtype Query: Decodable = EmptyQuery
     associatedtype Content: Decodable = EmptyContent
@@ -17,7 +17,7 @@ protocol HTTPRoute: Route {
     func decodeToInput(_ parameters: Parameters, query: Query, content: Content) async throws -> Input
 }
 
-private extension HTTPRoute where Query: Decodable {
+private extension RouteHTTPRequest where Query: Decodable {
     func decodeVaporRequestToQuery(_ vaporRequest: Vapor.Request) throws -> Query {
         if let Q = Query.self as? Validatable.Type {
             try Q.validate(query: vaporRequest)
@@ -27,7 +27,7 @@ private extension HTTPRoute where Query: Decodable {
     }
 }
 
-private extension HTTPRoute where Content: Decodable {
+private extension RouteHTTPRequest where Content: Decodable {
     func decodeVaporRequestToContent(_ vaporRequest: Vapor.Request) throws -> Content {
         if let C = Content.self as? Validatable.Type {
             try C.validate(content: vaporRequest)
@@ -41,7 +41,7 @@ private extension HTTPRoute where Content: Decodable {
 struct EmptyQuery: Decodable {}
 struct EmptyContent: Decodable {}
 
-extension HTTPRoute {
+extension RouteHTTPRequest {
     func decodeVaporRequestToInput(_ vaporRequest: Vapor.Request) async throws -> Input {
         let parameters = vaporRequest.parameters
         let query = try decodeVaporRequestToQuery(vaporRequest)
@@ -51,7 +51,7 @@ extension HTTPRoute {
     }
 }
 
-extension HTTPRoute where Query == EmptyQuery {
+extension RouteHTTPRequest where Query == EmptyQuery {
     func decodeVaporRequestToInput(_ vaporRequest: Vapor.Request) async throws -> Input {
         let parameters = vaporRequest.parameters
         let content = try decodeVaporRequestToContent(vaporRequest)
@@ -60,7 +60,7 @@ extension HTTPRoute where Query == EmptyQuery {
     }
 }
 
-extension HTTPRoute where Content == EmptyContent {
+extension RouteHTTPRequest where Content == EmptyContent {
     func decodeVaporRequestToInput(_ vaporRequest: Vapor.Request) async throws -> Input {
         let parameters = vaporRequest.parameters
         let query = try decodeVaporRequestToQuery(vaporRequest)
@@ -69,7 +69,7 @@ extension HTTPRoute where Content == EmptyContent {
     }
 }
 
-extension HTTPRoute where Query == EmptyQuery, Content == EmptyContent {
+extension RouteHTTPRequest where Query == EmptyQuery, Content == EmptyContent {
     func decodeVaporRequestToInput(_ vaporRequest: Vapor.Request) async throws -> Input {
         let parameters = vaporRequest.parameters
 
