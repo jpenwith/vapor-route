@@ -1,7 +1,39 @@
-import Vapor
+@testable import VaporRoute
+import Leaf
+import XCTVapor
 
-func routes(_ app: Application) throws {
-    let userAPI = UserAPI()
+final class VaporRouteTests: XCTestCase {
+    private var app: Application!
+    private var userAPI: UserAPI!
+
+    override func setUp() async throws {
+        app = Application(.testing)
+        userAPI = .init()
+
+        try await configure(app, userAPI: userAPI)
+    }
+
+    override func tearDown() async throws {
+        app.shutdown()
+    }
+
+    func testStaticRoute() async throws {
+        try app.test(.GET, "/", afterResponse: { res in
+            XCTAssertEqual(res.status, .ok)
+        })
+    }
+    
+    func testIndexUsers() async throws {
+        try app.test(.GET, "/users", afterResponse: { res in
+            XCTAssertEqual(res.status, .ok)
+        })
+    }
+}
+
+func configure(_ app: Application, userAPI: UserAPI) async throws {
+    app.views.use(.leaf)
+
+    app.handle(StaticRoute())
 
     app.handle(IndexUsersRoute()) { _, _ in
         await userAPI.index()
@@ -36,6 +68,7 @@ func routes(_ app: Application) throws {
 
         return user
     }
+
 }
 
 struct User: Vapor.Content {
@@ -92,30 +125,33 @@ actor UserAPI {
 }
 
 
-struct IndexUsersRoute: Route  {
-    let path = "users"
+struct StaticRoute: VaporRoute.Route  {
+    let path = ""
 
-    
+    struct Response: RouteViewResponse {
+        var templateName: String { "static.leaf" }
+    }
 }
 
-extension IndexUsersRoute {
+struct IndexUsersRoute: VaporRoute.Route  {
+    let path = "users"
+
     struct Response: RouteViewResponse {
         typealias Output = [User]
 
         var templateName: String { "users/index.leaf" }
         
-        struct ViewContext: Encodable {
+        struct ViewContext: RouteViewResponseViewContext {
             let users: [User]
-        }
-        
-        func createViewContext(_ output: [User]) -> ViewContext? {
-            .init(users: output)
+
+            init(output: Output) {
+                self.users = output
+            }
         }
     }
 }
 
-
-struct CreateUserRoute: Route  {
+struct CreateUserRoute: VaporRoute.Route  {
     let method: HTTPMethod = .POST
     let path = "users"
     
@@ -132,7 +168,7 @@ struct CreateUserRoute: Route  {
             let password: String
         }
         
-        func decodeToInput(_ parameters: Parameters, query: EmptyQuery, content: Content) async throws -> Input {
+        func decodeToInput(_ parameters: Parameters, query: RouteHTTPRequestEmptyQuery, content: Content) async throws -> Input {
             .init(
                 userName: content.name,
                 userEmail: content.email,
@@ -146,19 +182,17 @@ struct CreateUserRoute: Route  {
 
         var templateName: String { "users/read.leaf" }
 
-        struct ViewContext: Encodable {
+        struct ViewContext: RouteViewResponseViewContext {
             let user: User
-        }
-
-        func createViewContext(_ output: User) -> ViewContext? {
-            .init(user: output)
+            
+            init(output: Output) {
+                self.user = output
+            }
         }
     }
 }
 
-
-
-struct ReadUserRoute: Route  {
+struct ReadUserRoute: VaporRoute.Route  {
     let path = "users/:userID"
 
     struct Request: RouteHTTPRequest {
@@ -166,7 +200,7 @@ struct ReadUserRoute: Route  {
             let userID: UUID
         }
 
-        func decodeToInput(_ parameters: Parameters, query: EmptyQuery, content: EmptyContent) async throws -> Input {
+        func decodeToInput(_ parameters: Parameters, query: RouteHTTPRequestEmptyQuery, content: RouteHTTPRequestEmptyContent) async throws -> Input {
             .init(userID: try parameters.require("userID"))
         }
     }
@@ -176,19 +210,17 @@ struct ReadUserRoute: Route  {
 
         var templateName: String { "users/read.leaf" }
 
-        struct ViewContext: Encodable {
+        struct ViewContext: RouteViewResponseViewContext {
             let user: User
-        }
-
-        func createViewContext(_ output: User) -> ViewContext? {
-            .init(user: output)
+            
+            init(output: Output) {
+                self.user = output
+            }
         }
     }
 }
 
-
-
-struct UpdateUserRoute: Route  {
+struct UpdateUserRoute: VaporRoute.Route  {
     let method: HTTPMethod = .PATCH
     let path = "users/:userID"
 
@@ -206,7 +238,7 @@ struct UpdateUserRoute: Route  {
             let password: String
         }
 
-        func decodeToInput(_ parameters: Parameters, query: EmptyQuery, content: Content) async throws -> Input {
+        func decodeToInput(_ parameters: Parameters, query: RouteHTTPRequestEmptyQuery, content: Content) async throws -> Input {
             .init(
                 userID: try parameters.require("userID"),
                 userName: content.name,
@@ -221,19 +253,17 @@ struct UpdateUserRoute: Route  {
         
         var templateName: String { "users/read.leaf" }
 
-        struct ViewContext: Encodable {
+        struct ViewContext: RouteViewResponseViewContext {
             let user: User
-        }
-
-        func createViewContext(_ output: User) -> ViewContext? {
-            .init(user: output)
+            
+            init(output: Output) {
+                self.user = output
+            }
         }
     }
 }
 
-
-
-struct DeleteUserRoute: Route  {
+struct DeleteUserRoute: VaporRoute.Route  {
     let method: HTTPMethod = .DELETE
     let path = "users/:userID"
 
@@ -242,7 +272,7 @@ struct DeleteUserRoute: Route  {
             let userID: UUID
         }
         
-        func decodeToInput(_ parameters: Parameters, query: EmptyQuery, content: EmptyContent) async throws -> Input {
+        func decodeToInput(_ parameters: Parameters, query: RouteHTTPRequestEmptyQuery, content: RouteHTTPRequestEmptyContent) async throws -> Input {
             .init(userID: try parameters.require("userID"))
         }
 
@@ -253,12 +283,12 @@ struct DeleteUserRoute: Route  {
         
         var templateName: String { "users/read.leaf" }
 
-        struct ViewContext: Encodable {
+        struct ViewContext: RouteViewResponseViewContext {
             let user: Output
-        }
-
-        func createViewContext(_ output: User) -> ViewContext? {
-            .init(user: output)
+            
+            init(output: Output) {
+                self.user = output
+            }
         }
     }
 }
