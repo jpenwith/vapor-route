@@ -15,13 +15,13 @@ import Vapor
 public protocol RouteViewResponse: RouteResponse {
     associatedtype ViewContext: RouteViewResponseViewContext = RouteViewResponseEmptyViewContext<Self.Output> where ViewContext.Output == Self.Output
 
-    var templateName: String { get }
+    var viewName: String { get }
 }
 
 private extension RouteViewResponse {
     func renderViewWithOutput(_ output: Output, vaporRequest: Vapor.Request) async throws -> Vapor.View {
         try await vaporRequest.view.render(
-            templateName,
+            viewName,
             ViewContext(output: output)
         )
     }

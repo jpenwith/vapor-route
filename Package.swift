@@ -2,9 +2,9 @@
 import PackageDescription
 
 let package = Package(
-    name: "vapor_route",
+    name: "vapor-route",
     platforms: [
-       .macOS(.v13)
+        .macOS(.v10_15)
     ],
     products: [
         // Products define the executables and libraries a package produces, and make them visible to other packages.
@@ -13,14 +13,16 @@ let package = Package(
             targets: ["VaporRoute"])
     ],
     dependencies: [
-        .package(url: "https://github.com/vapor/vapor.git", from: "4.89.0"),
         .package(url: "https://github.com/vapor/leaf.git", from: "4.2.4"),
+        .package(url: "https://github.com/JohnSundell/Plot.git", from: "0.14.0"),
+        .package(url: "https://github.com/vapor/vapor.git", from: "4.89.0"),
     ],
     targets: [
         .target(
             name: "VaporRoute",
             dependencies: [
                 .product(name: "Leaf", package: "leaf"),
+                .product(name: "Plot", package: "Plot"),
                 .product(name: "Vapor", package: "vapor"),
             ]
         ),

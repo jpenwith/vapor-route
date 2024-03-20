@@ -20,7 +20,7 @@ public protocol Route {
     var method: Vapor.HTTPMethod { get }
     var path: String { get }
 
-    associatedtype Request: RouteRequest = RouteEmptyRequest
+    associatedtype Request:  RouteRequest = RouteEmptyRequest
     associatedtype Response: RouteResponse
 
     typealias Handler = @Sendable (_ input: Request.Input, _ vaporRequest: Vapor.Request) async throws -> Response.Output
