@@ -14,16 +14,18 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/vapor/leaf.git", from: "4.2.4"),
-        .package(url: "https://github.com/JohnSundell/Plot.git", from: "0.14.0"),
         .package(url: "https://github.com/vapor/vapor.git", from: "4.89.0"),
+
+        .package(name: "vapor-utils", path: "../vapor-utils"),
     ],
     targets: [
         .target(
             name: "VaporRoute",
             dependencies: [
                 .product(name: "Leaf", package: "leaf"),
-                .product(name: "Plot", package: "Plot"),
                 .product(name: "Vapor", package: "vapor"),
+                
+                .product(name: "VaporUtils", package: "vapor-utils"),
             ]
         ),
         .testTarget(name: "VaporRouteTests", dependencies: [
