@@ -1,6 +1,19 @@
 // swift-tools-version:5.9
 import PackageDescription
 
+#if os(Linux)
+//Linux means deployed on stage/prod, so fix a remote version
+let localOrRemoteDependencies: [Package.Dependency] = [
+    .package(url: "https://github.com/jpenwith/vapor-utils", branch: "master"),
+]
+#elseif os(macOS)
+//macOS means running locally
+let localOrRemoteDependencies: [Package.Dependency] = [
+    .package(name: "vapor-utils", path: "../vapor-utils"),
+]
+#endif
+
+
 let package = Package(
     name: "vapor-route",
     platforms: [
@@ -15,9 +28,7 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/vapor/leaf.git", from: "4.2.4"),
         .package(url: "https://github.com/vapor/vapor.git", from: "4.89.0"),
-
-        .package(name: "vapor-utils", path: "../vapor-utils"),
-    ],
+    ] + localOrRemoteDependencies,
     targets: [
         .target(
             name: "VaporRoute",
